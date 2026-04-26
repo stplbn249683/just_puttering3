@@ -1300,7 +1300,7 @@ Module Module1
               .max_solver_iterations = CInt(items(1).Trim)
             Case "folder_name"
               .folder_name = items(1).Trim
-            Case "inital_cash"
+            Case "initial_cash"
               .initial_cash = CDbl(items(1).Trim)
             Case "interest_rate"
               .interest_rate = CDbl(items(1).Trim)
