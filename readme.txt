@@ -1,3 +1,11 @@
+18Jul26   I corrected an error where, if the "Include Interest" checkbox was checked, the gain from the
+interest was included twice in the summary file columns for "% of return for hold" and "Return %". This
+error occurred because I added the gain from interest to the gain before calculating the columns for
+"% of return for hold" and "Return %".  But the gain from interest had actually already been included
+during the loop through the individual days. Also, the interest was being overestimated because the
+number of days was calculated using actual days but the interest rate calculation assumed 252 market days.
+
+
 The main reason why I have a database of OHLC stock prices is to be able to do backtesting.
 
 This program uses global optimization of backtested stock price data to try to find the optimized 

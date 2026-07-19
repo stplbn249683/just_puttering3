@@ -1,6 +1,10 @@
 ﻿' This program uses backtested historical stock price data from the close to compute globally optimized parameters for the stock holding
 ' periods that result in the largest gain for the criteria that were used.
-' Last modified on 29Apr25
+
+' Modified on 18Jul26 to correct an error where, if the "Include Interest" checkbox was checked, the gain from the interest was
+' included twice in the summary file columns for "% of return for hold" and "Return %".  Also, the interest was being overestimated
+' because the number of days was calculated using actual days but the interest rate calculation assumed 252 market days.
+' Last modified on 18Jul26
 
 Option Strict Off
 Option Explicit On
@@ -311,15 +315,15 @@ Module Module1
         Select Case action1
           Case NO_BUY
             If days > 0 And pb.bIncludeInterest Then
-              current_cash = cash_after_sale * (1.0 + pb.interest_rate * CDbl(days) / (252.0 * 100.0))
+              current_cash = cash_after_sale * (1.0 + pb.interest_rate * CDbl(days) / (365.0 * 100.0))
             End If
           Case BUY
             'price_bought = pb1.open(j_cl + 1) ' price from open the next day
             price_bought = pb1.close(j_cl) ' price from close the same day
             If days > 0 And pb.bIncludeInterest Then
-              ' use 252 instead of 365 because weekends and holidays are skipped
-              gain_from_interest += cash_after_sale * pb.interest_rate * CDbl(days) / (252.0 * 100.0)
-              current_cash = cash_after_sale * (1.0 + pb.interest_rate * CDbl(days) / (252.0 * 100.0))
+              ' use 365 because days are calculated for actual days not market days
+              gain_from_interest += cash_after_sale * pb.interest_rate * CDbl(days) / (365.0 * 100.0)
+              current_cash = cash_after_sale * (1.0 + pb.interest_rate * CDbl(days) / (365.0 * 100.0))
             End If
             num_shares_bought = current_cash / price_bought
             bDayBought = True
@@ -417,7 +421,7 @@ Module Module1
       If (total_num_shares <= 0.000001) Then
         Dim days& = DateDiff(DateInterval.Day, date_sold, pb1.date1.Last)
         If days > 0 And pb.bIncludeInterest Then
-          gain_from_interest += current_cash * pb.interest_rate * CDbl(days) / (252.0 * 100.0)
+          gain_from_interest += current_cash * pb.interest_rate * CDbl(days) / (365.0 * 100.0)
         End If
       End If
 
@@ -438,7 +442,7 @@ Module Module1
       win_rate# = 0.0
       If count_gain + count_loss > 0 Then win_rate# = 100.0 * CDbl(count_gain) / CDbl(count_gain + count_loss)
       pb.num_trades = count_gain + count_loss
-      perc_return = 100.0 * (gain_from_interest + gain1) / pb.initial_cash
+      perc_return = 100.0 * gain1 / pb.initial_cash
       perc_return_per_year = perc_return * 252.0 / CDbl(pb.num_used - 1)
       perc_return_hold = 100.0 * gain_for_hold / pb.initial_cash
       gain_per_day = 0.0
@@ -451,7 +455,7 @@ Module Module1
       gain_per_day_hold = gain_for_hold / CDbl(pb.num_used - 1)
       perc_days_in_market = 100.0 * CDbl(num_days_in_market) / CDbl(pb.num_used - 1)
       perc_of_return_for_hold = -1.0
-      If gain_for_hold > 0.00001 Then perc_of_return_for_hold = 100.0 * (gain_from_interest + gain1) / gain_for_hold
+      If gain_for_hold > 0.00001 Then perc_of_return_for_hold = 100.0 * gain1 / gain_for_hold
 
       ' calculate Sharpe ratio using arithmetic mean because that is how Sharpe did it
       'Dim geo_mean# = 100.0 * ((((perc_return / 100.0) + 1.0) ^ (1.0 / CDbl(pb.num_used - 2))) - 1.0)
